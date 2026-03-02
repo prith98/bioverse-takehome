@@ -12,6 +12,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,6 +25,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [regUsername, setRegUsername] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regError, setRegError] = useState("");
+  const [regLoading, setRegLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +52,41 @@ export default function LoginPage() {
 
     const { role } = await res.json();
     router.push(role === "admin" ? "/admin" : "/questionnaires");
+  }
+
+  function openRegister() {
+    setRegUsername("");
+    setRegPassword("");
+    setRegError("");
+    setRegisterOpen(true);
+  }
+
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault();
+    setRegError("");
+    setRegLoading(true);
+
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: regUsername, password: regPassword }),
+    });
+
+    setRegLoading(false);
+
+    if (!res.ok) {
+      let message = "Something went wrong.";
+      try {
+        const data = await res.json();
+        message = data.error ?? message;
+      } catch {
+        // non-JSON error body, keep default message
+      }
+      setRegError(message);
+      return;
+    }
+
+    router.push("/questionnaires");
   }
 
   return (
@@ -79,9 +126,57 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Signing in…" : "Sign in"}
             </Button>
+            <p className="text-center text-sm text-gray-500">
+              Don&apos;t have an account?{" "}
+              <button
+                type="button"
+                onClick={openRegister}
+                className="text-gray-900 underline underline-offset-2 hover:text-gray-600"
+              >
+                Create one
+              </button>
+            </p>
           </form>
         </CardContent>
       </Card>
+
+      <Dialog open={registerOpen} onOpenChange={setRegisterOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Create an account</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleRegister} className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label htmlFor="reg-username">Username</Label>
+              <Input
+                id="reg-username"
+                type="text"
+                autoComplete="username"
+                value={regUsername}
+                onChange={(e) => setRegUsername(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reg-password">Password</Label>
+              <Input
+                id="reg-password"
+                type="password"
+                autoComplete="new-password"
+                value={regPassword}
+                onChange={(e) => setRegPassword(e.target.value)}
+                required
+              />
+            </div>
+            {regError && (
+              <p className="text-sm text-red-500">{regError}</p>
+            )}
+            <Button type="submit" className="w-full" disabled={regLoading}>
+              {regLoading ? "Creating account…" : "Create account"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

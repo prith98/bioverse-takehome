@@ -17,6 +17,7 @@ export default async function AdminPage() {
     }),
     prisma.questionnaire.findMany({
       include: { junctions: { select: { questionId: true } } },
+      orderBy: { id: "asc" },
     }),
   ]);
 
@@ -27,13 +28,15 @@ export default async function AdminPage() {
         answersByQ.set(a.questionnaireId, new Set());
       answersByQ.get(a.questionnaireId)!.add(a.questionId);
     }
-    let completedCount = 0;
+    const completedByQuestionnaire: Record<number, boolean> = {};
     for (const q of questionnaires) {
-      if ((answersByQ.get(q.id)?.size ?? 0) >= q.junctions.length)
-        completedCount++;
+      completedByQuestionnaire[q.id] =
+        (answersByQ.get(q.id)?.size ?? 0) >= q.junctions.length;
     }
-    return { id: user.id, username: user.username, completedCount };
+    return { id: user.id, username: user.username, completedByQuestionnaire };
   });
+
+  const questionnaireRows = questionnaires.map((q) => ({ id: q.id, name: q.name }));
 
   return (
     <>
@@ -45,7 +48,7 @@ export default async function AdminPage() {
             Click a user to view their questionnaire responses.
           </p>
         </div>
-        <AdminTable users={userRows} />
+        <AdminTable users={userRows} questionnaires={questionnaireRows} />
       </main>
     </>
   );

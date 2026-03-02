@@ -31,20 +31,21 @@ export async function GET(
   // Group by questionnaire
   const grouped = new Map<
     number,
-    { questionnaireName: string; questions: { questionText: string; answer: string[] }[] }
+    { questionnaireId: number; questionnaireName: string; questions: { questionText: string; answer: string[] }[] }
   >();
 
   for (const a of answers) {
     if (!grouped.has(a.questionnaireId)) {
       grouped.set(a.questionnaireId, {
+        questionnaireId: a.questionnaireId,
         questionnaireName: a.questionnaire.name,
         questions: [],
       });
     }
-    const qJson = a.question.question as QuestionJson;
+    const qJson = a.question.question as unknown as QuestionJson;
     grouped.get(a.questionnaireId)!.questions.push({
       questionText: qJson.question,
-      answer: a.answer,
+      answer: a.answer as string[],
     });
   }
 

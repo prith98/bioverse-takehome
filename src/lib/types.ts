@@ -19,10 +19,15 @@ export interface QuestionnaireWithQuestions {
   questions: QuestionWithMeta[];
 }
 
+export interface QuestionnaireRow {
+  id: number;
+  name: string;
+}
+
 export interface UserRow {
   id: number;
   username: string;
-  completedCount: number;
+  completedByQuestionnaire: Record<number, boolean>;
 }
 
 export interface AnsweredQuestion {
@@ -31,6 +36,7 @@ export interface AnsweredQuestion {
 }
 
 export interface AnsweredQuestionnaire {
+  questionnaireId: number;
   questionnaireName: string;
   questions: AnsweredQuestion[];
 }

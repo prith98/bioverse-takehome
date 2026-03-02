@@ -12,12 +12,14 @@ import type { AnsweredQuestionnaire } from "@/lib/types";
 interface AdminUserModalProps {
   userId: number | null;
   username: string;
+  questionnaireId?: number | null;
   onClose: () => void;
 }
 
 export default function AdminUserModal({
   userId,
   username,
+  questionnaireId,
   onClose,
 }: AdminUserModalProps) {
   const [data, setData] = useState<AnsweredQuestionnaire[] | null>(null);
@@ -43,6 +45,14 @@ export default function AdminUserModal({
     };
   }, [userId]);
 
+  const displayData = questionnaireId
+    ? (data?.filter((q) => q.questionnaireId === questionnaireId) ?? [])
+    : (data ?? []);
+
+  const title = questionnaireId
+    ? `${username} — ${displayData[0]?.questionnaireName ?? "…"}`
+    : `${username}'s Responses`;
+
   return (
     <Dialog
       open={userId !== null}
@@ -52,20 +62,20 @@ export default function AdminUserModal({
     >
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{username}&apos;s Responses</DialogTitle>
+          <DialogTitle className="capitalize">{title}</DialogTitle>
         </DialogHeader>
 
         {loading && (
           <p className="text-sm text-gray-500 py-4">Loading…</p>
         )}
 
-        {!loading && data && data.length === 0 && (
+        {!loading && displayData.length === 0 && (
           <p className="text-sm text-gray-500 py-4">No answers yet.</p>
         )}
 
-        {!loading && data && data.length > 0 && (
+        {!loading && displayData.length > 0 && (
           <div className="space-y-6 pt-2">
-            {data.map((q, qi) => (
+            {displayData.map((q, qi) => (
               <div key={qi} className="space-y-3">
                 <h3 className="font-semibold text-gray-900 capitalize border-b pb-1">
                   {q.questionnaireName}
