@@ -63,11 +63,25 @@ export default function AdminMultiModal({
         fetch(`/api/admin/users/${userId}`)
           .then((r) => r.json())
           .then((json) => {
-            const wanted = wantedByUser.get(userId) ?? new Set();
-            const filtered: AnsweredQuestionnaire[] = (
-              json.questionnaires as AnsweredQuestionnaire[]
-            ).filter((q) => wanted.has(q.questionnaireId));
-            return { userId, username, questionnaires: filtered };
+            const wanted = wantedByUser.get(userId) ?? new Set<number>();
+            const apiMap = new Map<number, AnsweredQuestionnaire>(
+              (json.questionnaires as AnsweredQuestionnaire[]).map((q) => [
+                q.questionnaireId,
+                q,
+              ])
+            );
+            const questionnaires = Array.from(wanted).map((qId) => {
+              if (apiMap.has(qId)) return apiMap.get(qId)!;
+              const sel = selections.find(
+                (s) => s.userId === userId && s.questionnaireId === qId
+              );
+              return {
+                questionnaireId: qId,
+                questionnaireName: sel?.questionnaireName ?? `Questionnaire ${qId}`,
+                questions: [],
+              };
+            });
+            return { userId, username, questionnaires };
           })
       )
     ).then((data) => {
@@ -101,15 +115,15 @@ export default function AdminMultiModal({
                   <span className="font-semibold text-gray-900">{user.username}</span>
                 </div>
 
-                {user.questionnaires.length === 0 ? (
-                  <p className="text-sm text-gray-400 pl-1">No answers yet.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {user.questionnaires.map((q, qi) => (
-                      <div key={qi} className="space-y-2">
-                        <h4 className="font-medium text-gray-800 capitalize border-b pb-1">
-                          {q.questionnaireName}
-                        </h4>
+                <div className="space-y-4">
+                  {user.questionnaires.map((q, qi) => (
+                    <div key={qi} className="space-y-2">
+                      <h4 className="font-medium text-gray-800 capitalize border-b pb-1">
+                        {q.questionnaireName}
+                      </h4>
+                      {q.questions.length === 0 ? (
+                        <p className="text-sm text-gray-400 pl-1">No answers yet.</p>
+                      ) : (
                         <div className="space-y-3">
                           {q.questions.map((qa, i) => (
                             <div key={i} className="text-sm space-y-1">
@@ -123,10 +137,10 @@ export default function AdminMultiModal({
                             </div>
                           ))}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

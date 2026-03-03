@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const { username, password } = await req.json();
+    const { username, password, role } = await req.json();
 
     if (!username?.trim() || !password?.trim()) {
       return NextResponse.json(
@@ -20,8 +20,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const assignedRole = role === "admin" ? "admin" : "user";
+
     await prisma.user.create({
-      data: { username, password, role: "user" },
+      data: { username, password, role: assignedRole },
     });
 
     return NextResponse.json({ ok: true }, { status: 201 });

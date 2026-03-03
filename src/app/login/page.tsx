@@ -29,6 +29,7 @@ export default function LoginPage() {
   const [registerOpen, setRegisterOpen] = useState(false);
   const [regUsername, setRegUsername] = useState("");
   const [regPassword, setRegPassword] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [regError, setRegError] = useState("");
   const [regLoading, setRegLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -58,6 +59,7 @@ export default function LoginPage() {
   function openRegister() {
     setRegUsername("");
     setRegPassword("");
+    setIsAdmin(false);
     setRegError("");
     setRegisterOpen(true);
   }
@@ -70,7 +72,7 @@ export default function LoginPage() {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: regUsername, password: regPassword }),
+      body: JSON.stringify({ username: regUsername, password: regPassword, role: isAdmin ? "admin" : "user" }),
     });
 
     setRegLoading(false);
@@ -171,6 +173,18 @@ export default function LoginPage() {
                 onChange={(e) => setRegPassword(e.target.value)}
                 required
               />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="reg-admin"
+                type="checkbox"
+                checked={isAdmin}
+                onChange={(e) => setIsAdmin(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <Label htmlFor="reg-admin" className="font-normal cursor-pointer">
+                Admin access
+              </Label>
             </div>
             {regError && (
               <p className="text-sm text-red-500">{regError}</p>
