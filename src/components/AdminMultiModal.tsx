@@ -70,7 +70,7 @@ export default function AdminMultiModal({
                 q,
               ])
             );
-            const questionnaires = Array.from(wanted).map((qId) => {
+            const questionnaires = Array.from(wanted).sort((a, b) => a - b).map((qId) => {
               if (apiMap.has(qId)) return apiMap.get(qId)!;
               const sel = selections.find(
                 (s) => s.userId === userId && s.questionnaireId === qId

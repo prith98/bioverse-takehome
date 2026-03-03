@@ -56,6 +56,31 @@ export default function AdminTable({ users, questionnaires }: AdminTableProps) {
     });
   }
 
+  function toggleUserAllCells(user: UserRow) {
+    const allSelected = questionnaires.every((q) =>
+      selectedCells.has(`${user.id}-${q.id}`)
+    );
+    setSelectedCells((prev) => {
+      const next = new Map(prev);
+      if (allSelected) {
+        questionnaires.forEach((q) => next.delete(`${user.id}-${q.id}`));
+      } else {
+        questionnaires.forEach((q) => {
+          const key = `${user.id}-${q.id}`;
+          if (!next.has(key)) {
+            next.set(key, {
+              userId: user.id,
+              username: user.username,
+              questionnaireId: q.id,
+              questionnaireName: q.name,
+            });
+          }
+        });
+      }
+      return next;
+    });
+  }
+
   const multiSelections = Array.from(selectedCells.values());
 
   return (
@@ -114,9 +139,11 @@ export default function AdminTable({ users, questionnaires }: AdminTableProps) {
               <TableRow key={user.id} className={multiMode ? "" : "cursor-pointer hover:bg-gray-50"}>
                 {/* Username cell — opens all-questionnaires modal in normal mode */}
                 <TableCell
-                  className={`font-medium ${!multiMode ? "cursor-pointer" : ""}`}
+                  className="font-medium cursor-pointer"
                   onClick={() => {
-                    if (!multiMode) {
+                    if (multiMode) {
+                      toggleUserAllCells(user);
+                    } else {
                       setSingleModal({ userId: user.id, username: user.username, questionnaireId: null, questionnaireName: null });
                     }
                   }}
