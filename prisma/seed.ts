@@ -1,9 +1,20 @@
 import "dotenv/config";
+import { readFileSync } from "fs";
+import path from "path";
+import { parse } from "csv-parse/sync";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
+
+function readCsv(filename: string): Record<string, string>[] {
+  const content = readFileSync(
+    path.join(process.cwd(), "public", filename),
+    "utf-8"
+  );
+  return parse(content, { columns: true, skip_empty_lines: true, bom: true });
+}
 
 async function main() {
   console.log("Seeding database...");
@@ -15,7 +26,7 @@ async function main() {
   await prisma.questionnaire.deleteMany();
   await prisma.user.deleteMany();
 
-  // Users
+  // Users (demo credentials — not from CSV)
   await prisma.user.createMany({
     data: [
       { id: 1, username: "user", password: "user", role: "user" },
@@ -23,102 +34,29 @@ async function main() {
     ],
   });
 
-  // Questionnaires
-  await prisma.questionnaire.createMany({
-    data: [
-      { id: 1, name: "semaglutide" },
-      { id: 2, name: "nad-injection" },
-      { id: 3, name: "metformin" },
-    ],
-  });
+  // Questionnaires — sourced from questionnaire_questionnaires.csv
+  const questionnaires = readCsv("questionnaire_questionnaires.csv").map(
+    (row) => ({ id: parseInt(row.id), name: row.name })
+  );
+  await prisma.questionnaire.createMany({ data: questionnaires });
 
-  // Questions
-  await prisma.question.createMany({
-    data: [
-      {
-        id: 1,
-        question: {
-          type: "mcq",
-          question: "Why are you interested in this product? Select all that apply.",
-          options: [
-            "Improve blood pressure",
-            "Reduce risk of future cardiac events",
-            "Support lifestyle changes",
-            "Longevity benefits",
-          ],
-        },
-      },
-      {
-        id: 2,
-        question: {
-          type: "input",
-          question:
-            "Tell us anything else you'd like your provider to know when prescribing your medication.",
-        },
-      },
-      {
-        id: 3,
-        question: {
-          type: "input",
-          question: "What is your current weight?",
-        },
-      },
-      {
-        id: 4,
-        question: {
-          type: "mcq",
-          question:
-            "Which of the following have you tried in the past? Select all that apply.",
-          options: [
-            "Keto or low carb",
-            "Plant-based",
-            "Macro or calorie counting",
-            "Weight Watchers",
-            "Noom",
-            "Calibrate",
-            "Found",
-            "Alpha",
-            "Push Health",
-          ],
-        },
-      },
-      {
-        id: 5,
-        question: {
-          type: "mcq",
-          question: "What's your weight loss goal?",
-          options: [
-            "Losing 1-15 pounds",
-            "Losing 16-50 pounds",
-            "Losing 51+ pounds",
-            "Not sure, I just need to lose weight",
-          ],
-        },
-      },
-      {
-        id: 6,
-        question: {
-          type: "input",
-          question: "Please list any new medications you are taking.",
-        },
-      },
-    ],
-  });
+  // Questions — sourced from questionnaire_questions.csv
+  // The `question` column is a JSON string (RFC 4180 quoting)
+  const questions = readCsv("questionnaire_questions.csv").map((row) => ({
+    id: parseInt(row.id),
+    question: JSON.parse(row.question),
+  }));
+  await prisma.question.createMany({ data: questions });
 
-  // Questionnaire Junctions
-  await prisma.questionnaireJunction.createMany({
-    data: [
-      { id: 1, questionId: 1, questionnaireId: 1, priority: 0 },
-      { id: 2, questionId: 2, questionnaireId: 1, priority: 10 },
-      { id: 3, questionId: 4, questionnaireId: 1, priority: 20 },
-      { id: 4, questionId: 1, questionnaireId: 2, priority: 0 },
-      { id: 5, questionId: 2, questionnaireId: 2, priority: 10 },
-      { id: 6, questionId: 3, questionnaireId: 2, priority: 20 },
-      { id: 7, questionId: 1, questionnaireId: 3, priority: 0 },
-      { id: 8, questionId: 5, questionnaireId: 3, priority: 10 },
-      { id: 9, questionId: 6, questionnaireId: 3, priority: 20 },
-    ],
-  });
+  // Junctions — sourced from questionnaire_junction.csv
+  // CSV uses snake_case column names: question_id, questionnaire_id
+  const junctions = readCsv("questionnaire_junction.csv").map((row) => ({
+    id: parseInt(row.id),
+    questionId: parseInt(row.question_id),
+    questionnaireId: parseInt(row.questionnaire_id),
+    priority: parseInt(row.priority),
+  }));
+  await prisma.questionnaireJunction.createMany({ data: junctions });
 
   console.log("Seeding complete.");
 }
