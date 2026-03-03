@@ -24,6 +24,7 @@ interface SingleModal {
   userId: number;
   username: string;
   questionnaireId: number | null;
+  questionnaireName: string | null;
 }
 
 export default function AdminTable({ users, questionnaires }: AdminTableProps) {
@@ -95,13 +96,14 @@ export default function AdminTable({ users, questionnaires }: AdminTableProps) {
                   {q.name}
                 </TableHead>
               ))}
+              <TableHead className="text-center">Completed</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={1 + questionnaires.length}
+                  colSpan={2 + questionnaires.length}
                   className="text-center text-gray-400 py-8"
                 >
                   No users found.
@@ -115,7 +117,7 @@ export default function AdminTable({ users, questionnaires }: AdminTableProps) {
                   className={`font-medium ${!multiMode ? "cursor-pointer" : ""}`}
                   onClick={() => {
                     if (!multiMode) {
-                      setSingleModal({ userId: user.id, username: user.username, questionnaireId: null });
+                      setSingleModal({ userId: user.id, username: user.username, questionnaireId: null, questionnaireName: null });
                     }
                   }}
                 >
@@ -139,7 +141,7 @@ export default function AdminTable({ users, questionnaires }: AdminTableProps) {
                           toggleCell(user, q);
                         } else {
                           e.stopPropagation();
-                          setSingleModal({ userId: user.id, username: user.username, questionnaireId: q.id });
+                          setSingleModal({ userId: user.id, username: user.username, questionnaireId: q.id, questionnaireName: q.name });
                         }
                       }}
                     >
@@ -151,6 +153,18 @@ export default function AdminTable({ users, questionnaires }: AdminTableProps) {
                     </TableCell>
                   );
                 })}
+
+                {/* Completed count cell */}
+                {(() => {
+                  const count = questionnaires.filter(
+                    (q) => user.completedByQuestionnaire[q.id]
+                  ).length;
+                  return (
+                    <TableCell className="text-center text-sm font-medium text-gray-700">
+                      {count} / {questionnaires.length}
+                    </TableCell>
+                  );
+                })()}
               </TableRow>
             ))}
           </TableBody>
@@ -162,6 +176,7 @@ export default function AdminTable({ users, questionnaires }: AdminTableProps) {
         userId={singleModal?.userId ?? null}
         username={singleModal?.username ?? ""}
         questionnaireId={singleModal?.questionnaireId}
+        questionnaireName={singleModal?.questionnaireName}
         onClose={() => setSingleModal(null)}
       />
 

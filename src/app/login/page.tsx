@@ -31,6 +31,7 @@ export default function LoginPage() {
   const [regPassword, setRegPassword] = useState("");
   const [regError, setRegError] = useState("");
   const [regLoading, setRegLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -86,7 +87,10 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/questionnaires");
+    setRegisterOpen(false);
+    setUsername(regUsername);
+    setSuccessMsg("Account created! You can now sign in.");
+    setTimeout(() => setSuccessMsg(""), 4000);
   }
 
   return (
@@ -177,6 +181,12 @@ export default function LoginPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {successMsg && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-green-600 text-white text-sm font-medium px-5 py-3 rounded-lg shadow-lg whitespace-nowrap">
+          {successMsg}
+        </div>
+      )}
     </div>
   );
 }

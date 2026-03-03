@@ -35,23 +35,37 @@ export async function GET(
 
   const questionIds = questionnaire.junctions.map((j) => j.questionId);
 
-  const currentAnswers = await prisma.userAnswer.findMany({
-    where: {
-      userId: session.id,
-      questionnaireId,
-      questionId: { in: questionIds },
-    },
-  });
+  const [currentAnswers, priorAnswers] = await Promise.all([
+    prisma.userAnswer.findMany({
+      where: {
+        userId: session.id,
+        questionnaireId,
+        questionId: { in: questionIds },
+      },
+    }),
+    prisma.userAnswer.findMany({
+      where: {
+        userId: session.id,
+        questionId: { in: questionIds },
+        NOT: { questionnaireId },
+      },
+      orderBy: { updatedAt: "desc" },
+    }),
+  ]);
 
   const currentMap = new Map(
     currentAnswers.map((a) => [a.questionId, a.answer as string[]])
   );
+  const priorMap = new Map<number, string[]>();
+  for (const a of priorAnswers) {
+    if (!priorMap.has(a.questionId)) priorMap.set(a.questionId, a.answer as string[]);
+  }
 
   const questions: QuestionWithMeta[] = questionnaire.junctions.map((j) => ({
     id: j.questionId,
     questionJson: j.question.question as QuestionJson,
     priority: j.priority,
-    existingAnswer: currentMap.get(j.questionId) ?? null,
+    existingAnswer: currentMap.get(j.questionId) ?? priorMap.get(j.questionId) ?? null,
   }));
 
   return NextResponse.json({

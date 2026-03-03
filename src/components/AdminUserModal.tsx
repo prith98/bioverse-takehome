@@ -13,6 +13,7 @@ interface AdminUserModalProps {
   userId: number | null;
   username: string;
   questionnaireId?: number | null;
+  questionnaireName?: string | null;
   onClose: () => void;
 }
 
@@ -20,6 +21,7 @@ export default function AdminUserModal({
   userId,
   username,
   questionnaireId,
+  questionnaireName,
   onClose,
 }: AdminUserModalProps) {
   const [data, setData] = useState<AnsweredQuestionnaire[] | null>(null);
@@ -50,7 +52,7 @@ export default function AdminUserModal({
     : (data ?? []);
 
   const title = questionnaireId
-    ? `${username} — ${displayData[0]?.questionnaireName ?? "…"}`
+    ? `${username} — ${displayData[0]?.questionnaireName ?? questionnaireName ?? "…"}`
     : `${username}'s Responses`;
 
   return (
