@@ -45,15 +45,15 @@ export default function LoginPage() {
       body: JSON.stringify({ username, password }),
     });
 
-    setLoading(false);
-
     if (!res.ok) {
+      setLoading(false);
       setError("Invalid username or password.");
       return;
     }
 
     const { role } = await res.json();
     router.push(role === "admin" ? "/admin" : "/questionnaires");
+    // loading stays true → button remains disabled during navigation
   }
 
   function openRegister() {

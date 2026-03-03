@@ -33,7 +33,7 @@ export default function QuestionRenderer({
         />
       ) : (
         <div className="space-y-2">
-          {questionJson.options?.map((option) => {
+          {[...(questionJson.options ?? []), "None"].map((option) => {
             const checked = value.includes(option);
             return (
               <div key={option} className="flex items-center gap-2">
@@ -41,8 +41,10 @@ export default function QuestionRenderer({
                   id={`${question.id}-${option}`}
                   checked={checked}
                   onCheckedChange={(c) => {
-                    if (c) {
-                      onChange([...value, option]);
+                    if (option === "None") {
+                      onChange(c ? ["None"] : []);
+                    } else if (c) {
+                      onChange([...value.filter((v) => v !== "None"), option]);
                     } else {
                       onChange(value.filter((v) => v !== option));
                     }
