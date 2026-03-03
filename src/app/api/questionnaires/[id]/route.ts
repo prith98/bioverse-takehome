@@ -63,7 +63,7 @@ export async function GET(
 
   const questions: QuestionWithMeta[] = questionnaire.junctions.map((j) => ({
     id: j.questionId,
-    questionJson: j.question.question as QuestionJson,
+    questionJson: j.question.question as unknown as QuestionJson,
     priority: j.priority,
     existingAnswer: currentMap.get(j.questionId) ?? priorMap.get(j.questionId) ?? null,
   }));
